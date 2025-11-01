@@ -36,6 +36,14 @@ class TokenKind(Enum):
     KW_BASE = 32
     KW_REM = 33
     KW_RANDOMIZE = 34
+    EOF = 35
 
+class Token:
+    kind: TokenKind
+    start: int
+    end: int
 
-
+    def __init__(self, kind, start, end):
+        self.kind = kind
+        self.start = start
+        self.end = end
