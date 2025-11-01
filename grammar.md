@@ -9,6 +9,17 @@ end-of-line ::= '\n'
 end-statement ::= 'END'
 statement ::= data-statement | def-statement | dimension -statement | gosub-statement | goto-statement | if-then-statement | input-statement | let-statement |on-goto-statement | option-statement | print-statement | randomize-statement | read-statement | remark-statement |restore-statement | return-statement | stop-statement
 
+for-block ::= for-line for-body
+for-body ::= block next-line
+for-line ::= line-number for-statement end-of-line
+next-line ::= line-number next-statement end-of-line
+for-statement ::= 'FOR' control-variable equals-sign initial-value 'TO' limit ('STEP' increment)?
+control-variable ::= simple-numeric-variable
+initial-value ::= numeric-expression
+limit ::= numeric-expression
+increment ::= numeric-expression
+next-statement ::= 'NEXT' control-variable
+
 data-statement ::= 'DATA' data-list
 data-list ::= datum (comma datum)*
 datum ::= quoted-string | unquoted-string
@@ -21,7 +32,8 @@ simple-numeric-variable ::= letter digit?
 
 numeric-expression ::= sign? term (sign term)*
 term ::= factor (multiplier factor)*
-factor ::= primary (numeric-variable | numeric-rep | numeric-function-rep | numeric-function-ref | left-parenthesis numeric-expression right-parenthesis)
+factor ::= primary (caret primary)*
+primary ::= (numeric-variable | numeric-rep | numeric-function-rep | numeric-function-ref | left-parenthesis numeric-expression right-parenthesis)
 
 numeric-variable ::= simple-numeric-variable | numeric-array-element
 numeric-array-element ::= numeric-array-name subscript
