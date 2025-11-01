@@ -1,7 +1,14 @@
 from tokens import Token, TokenKind
 from typing import Union, Optional
+sign = lambda x: -1 if x < 0 else 1
 
 WHITESPACE = [' ']
+LETTERS = set('QWERTYUIOPASDFGHJKLZXCVBNM')
+DIGITS = set('0123456789')
+PLAIN_STRING_CHARACTER = set('+-.') + DIGITS + LETTERS
+UNQUOTED_STRING_CHARACTER = set(' ') + PLAIN_STRING_CHARACTER
+QUOTED_STRING_CHARACTERS = set('!#$%&\'()*,/:;<=>^_') + UNQUOTED_STRING_CHARACTER
+STRING_CHARS = set('"') + QUOTED_STRING_CHARACTERS
 
 class Lexer:
 
@@ -129,7 +136,10 @@ class Lexer:
                     while self.source[self.current] not in WHITESPACE:
                         self.current += 1
                     return Token(TokenKind.IDENTIFIER, self.start, self.current)
-                
+            case _:
+                while self.source[self.current] not in WHITESPACE:
+                    self.current += 1
+                return Token(TokenKind.IDENTIFIER, self.start, self.current)
                 
     def process_symbol(self) -> TokenKind:
         char: str = self.source[self.current]
@@ -164,6 +174,69 @@ class Lexer:
                 return TokenKind.SYM_COMMA
             case _:
                 print(f"Unknown symbol: {char}")
+                return TokenKind.UNKNOWN
+    
+    def process_digit(self) -> Token:
+        # value = 0
+        # kind = TokenKind.UNKNOWN
+        # radix = None
+        # while True:
+        #     char: str = self.source[self.current]
+        #     self.current += 1
+
+        #     if char.isdigit():
+        #         if kind == TokenKind.UNKNOWN: kind = TokenKind.INTEGER
+        #         if kind == TokenKind.FLOAT: radix += 1
+        #         value *= 10
+        #         value += int(char)
+        #     elif char == '.':
+        #         kind = TokenKind.FLOAT
+        #     elif char in 'E+-':
+        #         break
+        #     else:
+        #         break
+            
+        # exp = 0
+        # if char in 'E+-':
+        #     if char == '-':
+        #         sign = -1
+        #     else:
+        #         sign = 1
+        #     while True:
+        #         char: str = self.source[self.current]
+        #         self.current += 1
+
+        #         if char.isdigit():
+        #             exp *= 10
+        #             exp += int(char) * sign
+        #         else:
+        #             break
+
+
+        # tok = Token(kind, self.start, self.current)
+        # match kind:
+        #     case TokenKind.INTEGER:
+        #         tok.value = value * ()
+        #     case TokenKind.FLOAT:
+        #         tok.value = value / (10 ** radix)
+        # return tok
+
+        kind = TokenKind.UNKNOWN
+        while True:
+            char: str = self.source[self.current]
+            self.current += 1
+
+            if char.isdigit():
+                if kind == TokenKind.UNKNOWN: 
+                    kind = TokenKind.INTEGER
+            elif char == '.':
+                kind = TokenKind.FLOAT
+            else:
+                break
+
+        return Token(kind, self.start, self.current)
+        
+
     
     def process_token(self):
         self.skip_whitespace()

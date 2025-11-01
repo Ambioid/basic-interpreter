@@ -1,8 +1,11 @@
 from enum import Enum
+from typing import Union, Optional
 
 class TokenKind(Enum):
     UNKNOWN = 0
     IDENTIFIER = 1 
+    INTEGER = 37
+    FLOAT = 38
     SYM_PLUS = 2
     SYM_MINUS = 3
     SYM_ASTERISK = 4
@@ -43,6 +46,8 @@ class Token:
     kind: TokenKind
     start: int
     end: int
+
+    value: Optional[Union[int, float]]
 
     def __init__(self, kind, start, end):
         self.kind = kind
