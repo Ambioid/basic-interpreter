@@ -37,6 +37,7 @@ class TokenKind(Enum):
     KW_REM = 33
     KW_RANDOMIZE = 34
     EOF = 35
+    EOL = 36
 
 class Token:
     kind: TokenKind
@@ -47,3 +48,6 @@ class Token:
         self.kind = kind
         self.start = start
         self.end = end
+
+    def __repr__(self):
+        return f"{self.kind.name} <{self.start}:{self.end}>"
