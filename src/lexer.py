@@ -254,12 +254,19 @@ class Lexer:
         else:
             return Token(self.process_symbol(), self.start, self.start + 1)
 
-    def peek():
+    def peek(self):
+        if self.peeked is None:
+            self.peeked = self.process_token()
 
-        pass
+        return self.peeked
 
-    def next():
-        pass
+    def next(self):
+        if self.peeked is None:
+            return self.process_token()
+        else:
+            peek = self.peeked
+            self.peeked = None
+            return peek
     
         
 print("DATA DIM LET +-=;")
