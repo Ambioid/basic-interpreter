@@ -238,14 +238,21 @@ class Lexer:
         
 
     
-    def process_token(self):
+    def process_token(self) -> Optional[Token]:
         self.skip_whitespace()
         self.start = self.current
         char: str = self.source[self.current]
 
         print(f"cur: {self.current}, <{self.source[self.current]}>")
-
-        if char.isalpha():
+    
+        if char == '\n':
+            self.current += 1
+            return Token(TokenKind.EOL, self.start, self.start+1)
+        elif self.current == len(self.source):
+            return Token(TokenKind.EOF, len(self.source), len(self.source))
+        elif self.current > len(self.source):
+            return None
+        elif char.isalpha():
             return self.process_alpha()
         
         elif char.isdigit():
@@ -254,12 +261,20 @@ class Lexer:
         else:
             return Token(self.process_symbol(), self.start, self.start + 1)
 
-    def peek():
+    def peek(self) -> Optional[Token]:
+        if self.peeked is None: 
+            self.peeked = self.process_token()
+            return self.peeked
+        
+        return self.peeked
 
-        pass
-
-    def next():
-        pass
+    def next(self) -> Token:
+        if self.peeked is None:
+            return self.process_token()
+        
+        peek = self.peeked
+        self.peeked = self.process_token()
+        return peek
     
         
 print("DATA DIM LET +-=;")
