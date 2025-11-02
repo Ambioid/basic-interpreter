@@ -7,7 +7,7 @@ line ::= line-number statement end-of-line
 line-number ::= digit digit? digit? digit?
 end-of-line ::= '\n'
 end-statement ::= 'END'
-statement ::= data-statement | def-statement | dimension -statement | gosub-statement | goto-statement | if-then-statement | input-statement | let-statement |on-goto-statement | option-statement | print-statement | randomize-statement | read-statement | remark-statement |restore-statement | return-statement | stop-statement
+statement ::= data-statement | def-statement | dimension-statement | gosub-statement | goto-statement | if-then-statement | input-statement | let-statement |on-goto-statement | option-statement | print-statement | randomize-statement | read-statement | remark-statement |restore-statement | return-statement | stop-statement
 
 for-block ::= for-line for-body
 for-body ::= block next-line
@@ -40,7 +40,7 @@ numeric-array-element ::= numeric-array-name subscript
 numeric array-name ::= letter
 subscript ::= left-parenthesis numeric-expression (comma numeric-expression)? right-parenthesis
 
-dimension-statement ::= 'DIM' array declaration (comma array-declaration)*
+dimension-statement ::= 'DIM' array-declaration (comma array-declaration)*
 array-declaration ::= numeric-array-name left-parenthesis bounds right-parenthesis
 bounds ::= integer (comma integer)?
 
