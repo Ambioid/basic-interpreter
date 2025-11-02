@@ -41,7 +41,7 @@ argument-list ::= left-parenthesis numeric-expression right-parenthesis
 
 numeric-variable ::= simple-numeric-variable | numeric-array-element
 numeric-array-element ::= numeric-array-name subscript
-numeric array-name ::= letter
+numeric-array-name ::= letter
 subscript ::= left-parenthesis numeric-expression (comma numeric-expression)? right-parenthesis
 
 dimension-statement ::= 'DIM' array-declaration (comma array-declaration)*
