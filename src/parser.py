@@ -354,6 +354,67 @@ class Parser:
 
         return ast.IfThen(expr, line_number)
 
+    def parse_input_statement(self) -> ast.Input:
+        assert self.lexer.next().kind == TokenKind.KW_INPUT
+
+        vars = self.parse_variable_list()
+
+        return ast.Input(vars)
+
+    def parse_variable_list(self) -> List[ast.NumVar | ast.StringVar]:
+        vars = []
+        vars.append(self.parse_variable())
+
+        while True:
+            if self.lexer.peek().kind == TokenKind.SYM_COMMA:
+                self.lexer.next()
+                vars.append(self.parse_variable())
+            else:
+                break
+        return vars
+
+    def parse_option_statement(self) -> ast.Option:
+        assert self.lexer.next().kind == TokenKind.KW_OPTION
+
+        assert self.lexer.next().kind == TokenKind.KW_BASE
+
+        assert (tok := self.lexer.next()).kind == TokenKind.INTEGER
+        assert (value := int(self.lexer.get_token_string(tok))) in [0, 1]
+
+        match value:
+            case 0: 
+                return ast.Option.OPT_BASE_ZERO
+            case 1:
+                return ast.Option.OPT_BASE_ONE
+
+    def parse_randomize_statement(self) -> ast.Randomize:
+        assert self.lexer.next().kind == TokenKind.KW_RANDOMIZE
+        return ast.Randomize()
+
+    def parse_read_statement(self) -> ast.Read:
+        assert self.lexer.next().kind == TokenKind.KW_READ
+
+        vars = self.parse_variable_list()
+
+        return ast.Read(vars)
+
+    def parse_remark(self) -> None:
+        while self.lexer.next().kind != TokenKind.EOL:
+            pass
+        return
+
+    def parse_restore_statement(self) -> ast.Restore:
+        assert self.lexer.next().kind == TokenKind.KW_RESTORE
+        return ast.Restore()
+
+    def parse_return_statement(self) -> ast.Return:
+        assert self.lexer.next().kind == TokenKind.KW_RETURN
+        return ast.Return()
+
+    def parse_stop_statment(self) -> ast.Stop:
+        assert self.lexer.next().kind == TokenKind.KW_STOP
+        return ast.Stop()
+
     def parse_relation(self) -> "Relation":
         tok = self.lexer.next()
         assert tok.kind in [TokenKind.SYM_EQUAL, TokenKind.SYM_NEQ, 
@@ -370,64 +431,6 @@ class Parser:
 
     def parse_string_expression(self) -> "StringExpression":
         pass
-
-    def parse_input_statement(self) -> "InputStatement":
-        assert self.lexer.next().kind == TokenKind.KW_INPUT
-
-        self.parse_variable_list()
-
-        return
-
-    def parse_variable_list(self) -> "VariableList":
-        self.parse_variable()
-
-        while True:
-            if self.lexer.peek().kind == TokenKind.SYM_COMMA:
-                self.lexer.next()
-                self.parse_variable()
-            else:
-                break
-
-        return
-
-    def parse_option_statement(self) -> "OptionStatement":
-        assert self.lexer.next().kind == TokenKind.KW_OPTION
-
-        assert self.lexer.next().kind == TokenKind.KW_BASE
-
-        assert (tok := self.lexer.next().kind) == TokenKind.INTEGER
-        assert tok.value in [0, 1]
-
-        return
-
-    def parse_randomize_statement(self) -> "RandomizeStatement":
-        assert self.lexer.next().kind == TokenKind.KW_RANDOMIZE
-        return
-
-    def parse_read_statement(self) -> "ReadStatement":
-        assert self.lexer.next().kind == TokenKind.KW_READ
-
-        self.parse_variable_list()
-
-        return
-
-    def parse_remark(self) -> None:
-        while self.lexer.next().kind != TokenKind.EOL:
-            pass
-        return
-
-    def parse_restore_statement(self) -> "RestoreStatement":
-        assert self.lexer.next().kind == TokenKind.KW_RESTORE
-        return
-
-    def parse_return_statement(self) -> "ReturnStatement":
-        assert self.lexer.next().kind == TokenKind.KW_RETURN
-        return
-
-    def parse_stop_statment(self) -> "StopStatement":
-        assert self.lexer.next().kind == TokenKind.KW_STOP
-        return
-    
 
     def parse_variable(self) -> "Variable":
         pass
