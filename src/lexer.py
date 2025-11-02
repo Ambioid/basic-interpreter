@@ -38,7 +38,7 @@ class Lexer:
     def process_variable(self) -> Token:
         assert self.source[self.start] in LETTERS
         self.current += 1
-        
+
         if self.source[self.start] in DIGITS:
             self.current += 1
         
@@ -142,8 +142,8 @@ class Lexer:
             case "r":
                 if (tok := check_kw("RANDOMIZE", TokenKind.KW_RANDOMIZE)) is not None:
                     return Token(tok, self.start, self.current)
-                elif (tok := check_kw("REM", TokenKind.KW_REM)) is not None:
-                    return Token(tok, self.start, self.current)
+                # elif (tok := check_kw("REM", TokenKind.KW_REM)) is not None:
+                #     return Token(tok, self.start, self.current)
                 elif (tok := check_kw("RESTORE", TokenKind.KW_RESTORE)) is not None:
                     return Token(tok, self.start, self.current)
                 elif (tok := check_kw("READ", TokenKind.KW_READ)) is not None:
@@ -265,6 +265,11 @@ class Lexer:
     
     def process_token(self) -> Token:
         self.skip_whitespace()
+
+        if self.source[self.current:self.current+3] == "REM":
+            while self.source[self.current] != '\n':
+                self.current += 1
+
         self.start = self.current
         if self.current >= len(self.source):
             return Token(TokenKind.EOF, len(self.source), len(self.source))
