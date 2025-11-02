@@ -56,7 +56,7 @@ class Token:
     start: int
     end: int
 
-    value: Optional[Union[int, float]]
+    value: Optional[Union[int, float]] = None
 
     def __init__(self, kind, start, end):
         self.kind = kind
@@ -64,4 +64,5 @@ class Token:
         self.end = end
 
     def __repr__(self):
-        return f"{self.kind.name} <{self.start}:{self.end}>"
+        fmt = f"{self.kind.name} <{self.start}:{self.end}>"
+        return fmt
