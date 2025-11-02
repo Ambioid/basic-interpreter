@@ -23,6 +23,7 @@ class TokenKind(Enum):
     SYM_NEQ = 45
     SYM_LEQ = 46
     SYM_GEQ = 47
+    QUOTED_STRING = 48
     KW_INPUT = 39
     KW_PRINT = 40
     KW_LET = 16

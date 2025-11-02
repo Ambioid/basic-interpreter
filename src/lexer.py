@@ -194,7 +194,10 @@ class Lexer:
             case "$":
                 return TokenKind.SYM_DOLLAR
             case "\"":
-                return TokenKind.SYM_DBL_QUOTE
+                while self.source[self.current] != "\"":
+                    self.current += 1
+                self.current += 1
+                return TokenKind.QUOTED_STRING
             case ",":
                 return TokenKind.SYM_COMMA
             case _:
@@ -288,7 +291,7 @@ class Lexer:
             
             return self.process_digit()
         else:
-            return Token(self.process_symbol(), self.start, self.start + 1)
+            return Token(self.process_symbol(), self.start, self.current)
 
     def triple_peek(self) -> Token:
         return self.cache[3]
