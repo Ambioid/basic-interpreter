@@ -1,4 +1,4 @@
-# Syntax
+# Very Incomplete but Useful Syntax Spec
 
 ```ebnf
 program ::= block* end-line
@@ -7,7 +7,7 @@ line ::= line-number statement end-of-line
 line-number ::= digit digit? digit? digit?
 end-of-line ::= '\n'
 end-statement ::= 'END'
-statement ::= data-statement | def-statement | dimension -statement | gosub-statement | goto-statement | if-then-statement | input-statement | let-statement |on-goto-statement | option-statement | print-statement | randomize-statement | read-statement | remark-statement |restore-statement | return-statement | stop-statement
+statement ::= data-statement | def-statement | dimension-statement | gosub-statement | goto-statement | if-then-statement | input-statement | let-statement | on-goto-statement | option-statement | print-statement | randomize-statement | read-statement | remark-statement |restore-statement | return-statement | stop-statement
 
 for-block ::= for-line for-body
 for-body ::= block next-line
@@ -33,14 +33,18 @@ simple-numeric-variable ::= letter digit?
 numeric-expression ::= sign? term (sign term)*
 term ::= factor (multiplier factor)*
 factor ::= primary (caret primary)*
-primary ::= (numeric-variable | numeric-rep | numeric-function-rep | numeric-function-ref | left-parenthesis numeric-expression right-parenthesis)
+primary ::= numeric-variable | numeric-rep | numeric-function-ref | left-parenthesis numeric-expression right-parenthesis
+numeric-function-ref ::= numeric-function-name argument-list?
+numeric-function-name ::= numeric-defined-function | numeric-supplied-function
+numeric-supplied-function ::= ABS | ATN | COS | EXP | INT | LOG | RND | SGN | SIN | SQR | TAN
+argument-list ::= left-parenthesis numeric-expression right-parenthesis
 
 numeric-variable ::= simple-numeric-variable | numeric-array-element
 numeric-array-element ::= numeric-array-name subscript
 numeric array-name ::= letter
 subscript ::= left-parenthesis numeric-expression (comma numeric-expression)? right-parenthesis
 
-dimension-statement ::= 'DIM' array declaration (comma array-declaration)*
+dimension-statement ::= 'DIM' array-declaration (comma array-declaration)*
 array-declaration ::= numeric-array-name left-parenthesis bounds right-parenthesis
 bounds ::= integer (comma integer)?
 
@@ -51,7 +55,7 @@ goto-statement ::= 'GO' space* 'TO' line-number
 
 if-then-statement ::= 'IF' relational-expression 'THEN' line-number
 relational-expression ::= numeric-expression relation numeric-expression | string-expression equality-relation string-expression
-relation ::= equality-relation | less-than-sign | greater-than -sign | not-less | not-greater
+relation ::= equality-relation | less-than-sign | greater-than-sign | not-less | not-greater
 equality-relation ::= equals-sign | not-equals
 
 return-statement ::= 'RETURN'
@@ -60,7 +64,7 @@ on-goto-statement ::= 'ON' numeric-expression 'GO' space* 'TO' line-number (comm
 print-statement ::= 'PRINT' print-list?
 print-list ::= (print-item? print-separator)* print-item?
 print-item ::= expression | tab-call
-tab-call ::= comma | semi-colon
+tab-call ::= 'TAB' left-parenthesis numeric-expression right-parenthesis
 
 randomize-statement ::= 'RANDOMIZE'
 
