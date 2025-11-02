@@ -10,6 +10,8 @@ UNQUOTED_STRING_CHARACTER = set(' ').union(PLAIN_STRING_CHARACTER)
 QUOTED_STRING_CHARACTERS = set('!#$%&\'()*,/:;<=>^_').union(UNQUOTED_STRING_CHARACTER)
 STRING_CHARS = set('"').union(QUOTED_STRING_CHARACTERS)
 
+STD_LIB = ["ABS", "ATN", "COS", "EXP", "INT", "LOG", "RND", "SGN", "SIN", "SQR", "TAN"]
+
 class Lexer:
     source: str
     cache: List[Optional[Token]] = [None, None, None, None]
@@ -38,6 +40,10 @@ class Lexer:
     def process_variable(self) -> Token:
         assert self.source[self.start] in LETTERS
         self.current += 1
+
+        if self.source[self.start:self.start+3] in STD_LIB:
+            self.current += 3
+            return Token(TokenKind.IDENTIFIER, self.start, self.current)    
 
         if self.source[self.start] in DIGITS:
             self.current += 1

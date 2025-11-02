@@ -22,7 +22,7 @@ class ForBlock:
     init_val: "NumExpr"
     limit: "NumExpr"
     step_by: Optional["NumExpr"]
-    body: "Block"
+    body: list["Block"]
 
 
 Block = Line | ForBlock
