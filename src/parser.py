@@ -1,6 +1,6 @@
 from lexer import Lexer, LETTERS, DIGITS
 from tokens import Token, TokenKind
-from typing import Optional
+from typing import List, Tuple, Optional
 import syntax as ast
 
 class EndLineTrigger(Exception):
@@ -12,7 +12,8 @@ class Parser:
     def __init__(self, lexer):
         self.lexer = lexer
 
-    def parse_program(self) -> "Program":
+    def parse_program(self) -> ast.Program:
+        statements = []
         while True:
             assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
             if self.lexer.double_peek().kind in [
@@ -21,15 +22,17 @@ class Parser:
                 TokenKind.KW_OPTION, TokenKind.KW_PRINT, TokenKind.KW_RANDOMIZE,
                 TokenKind.KW_READ, TokenKind.KW_REM, TokenKind.KW_RESTORE, 
                 TokenKind.KW_RETURN, TokenKind.KW_STOP, TokenKind.KW_FOR]:
-                self.parse_block()
+                statements.extend(self.parse_block())
             elif self.lexer.double_peek().kind in [TokenKind.KW_END]:
+                self.parse_endline()
                 break
             else:
                 raise AssertionError("Invalid tokenage")
         self.parse_endline()
-        return
+        return ast.Program(statements)
 
-    def parse_block(self) -> "Block":
+    def parse_block(self) -> List[ast.Block]:
+        statements = []
         while True:
             assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
             if self.lexer.double_peek().kind in [
@@ -38,107 +41,110 @@ class Parser:
                 TokenKind.KW_OPTION, TokenKind.KW_PRINT, TokenKind.KW_RANDOMIZE,
                 TokenKind.KW_READ, TokenKind.KW_REM, TokenKind.KW_RESTORE, 
                 TokenKind.KW_RETURN, TokenKind.KW_STOP]:
-                self.parse_line()
+                statements.append(self.parse_line())
             elif self.lexer.double_peek().kind in [TokenKind.KW_FOR]:
-                self.parse_for_block()
+                statements.append(self.parse_for_block())
             else:
                 break
+        return statements
 
-    def parse_endline(self) -> "Endline":
+    def parse_endline(self) -> None:
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value
         assert self.lexer.next() == TokenKind.KW_END
         assert self.lexer.next() == TokenKind.EOL
         return
 
-    def parse_line(self) -> "Line":
+    def parse_line(self) -> ast.Line:
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value
 
-        self.parse_statement()
+        statement = self.parse_statement()
 
         assert self.lexer.next() == TokenKind.EOL
-        return        
+        return ast.Line(line_number, statement)
 
-    def parse_for_block(self) -> "ForBlock":
-        self.parse_for_line()
+    def parse_for_block(self) -> ast.ForBlock:
+        line_number, control, init, limit, inc = self.parse_for_line()
 
-        self.parse_for_body()
-        return
+        body = self.parse_for_body()
+        return ast.ForBlock(line_number, control, init, limit, inc, body)
 
-    def parse_statement(self) -> "Statement":
+    def parse_statement(self) -> ast.Stmt:
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
 
         match self.lexer.double_peek().kind:
             case TokenKind.KW_DATA:
-                self.parse_data_statement()
+                return self.parse_data_statement()
             case TokenKind.KW_DEF:
-                self.parse_def_statement()
+                return self.parse_def_statement()
             case TokenKind.KW_DIM:
-                self.parse_dimension_statement()
+                return self.parse_dimension_statement()
             case TokenKind.KW_GO:
                 if self.lexer.triple_peek().kind == TokenKind.KW_SUB:
-                    self.parse_gosub_statement()
+                    return self.parse_gosub_statement()
                 elif self.lexer.triple_peek().kind == TokenKind.KW_TO:
-                    self.parse_goto_statement()
+                    return self.parse_goto_statement()
                 else:
                     raise AssertionError("Invalid Go statement")
             case TokenKind.KW_IF:
-                self.parse_if_then_statement()
+                return self.parse_if_then_statement()
             case TokenKind.KW_INPUT:
-                self.parse_input_statement()
+                return self.parse_input_statement()
             case TokenKind.KW_LET:
-                self.parse_let_statement()
+                return self.parse_let_statement()
             case TokenKind.KW_ON:
-                self.parse_on_goto_statement()
+                return self.parse_on_goto_statement()
             case TokenKind.KW_OPTION:
-                self.parse_option_statement()
+                return self.parse_option_statement()
             case TokenKind.KW_PRINT:
-                self.parse_print_statement()
+                return self.parse_print_statement()
             case TokenKind.KW_RANDOMIZE:
-                self.parse_randomize_statement()
+                return self.parse_randomize_statement()
             case TokenKind.KW_READ:
-                self.parse_read_statement()
-            case TokenKind.KW_REM:
-                self.parse_remark()
+                return self.parse_read_statement()
+            # case TokenKind.KW_REM:
+            #     self.parse_remark()
+            #     return None
             case TokenKind.KW_RESTORE:
-                self.parse_restore_statement()
+                return self.parse_restore_statement()
             case TokenKind.KW_RETURN:
-                self.parse_return_statement()
+                return self.parse_return_statement()
             case TokenKind.KW_STOP:
-                self.parse_stop_statment()
+                return self.parse_stop_statment()
             case _:
                 raise AssertionError("Thats not a statement you fool.")
 
-    def parse_for_line(self) -> "ForLine":
+    def parse_for_line(self) -> Tuple[int, ast.SimpleNumVar, ast.NumExpr, ast.NumExpr, Optional[ast.NumExpr]]:
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value
 
-        self.parse_for_statement()
+        control, init, limit, inc = self.parse_for_statement()
 
         assert self.lexer.next() == TokenKind.EOL
-        return        
+        return (line_number, control, init, limit, inc)
 
-    def parse_for_statement(self) -> "ForStatement":
+    def parse_for_statement(self) -> Tuple[ast.SimpleNumVar, ast.NumExpr, ast.NumExpr, Optional[ast.NumExpr]]:
         assert self.lexer.next() == TokenKind.KW_FOR
 
-        self.parse_control_variable()
+        control = self.parse_control_variable()
 
         assert self.lexer.next() == TokenKind.SYM_EQUAL
 
-        self.parse_initial_value()
+        init = self.parse_initial_value()
 
         assert self.lexer.next() == TokenKind.KW_TO
 
-        self.parse_limit()
+        limit = self.parse_limit()
 
+        inc = None
         if self.lexer.peek().kind == TokenKind.KW_STEP:
             assert self.lexer.next() == TokenKind.KW_STEP
+            inc = self.parse_increment()
 
-            self.parse_increment()
-        return
+        return (control, init, limit, inc)
 
-    def parse_for_body(self) -> "ForBody":
+    def parse_for_body(self) -> ast.Block:
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         if self.lexer.double_peek().kind in [
             TokenKind.KW_DATA, TokenKind.KW_DEF, TokenKind.KW_DIM, TokenKind.KW_GO,
@@ -146,37 +152,33 @@ class Parser:
             TokenKind.KW_OPTION, TokenKind.KW_PRINT, TokenKind.KW_RANDOMIZE,
             TokenKind.KW_READ, TokenKind.KW_REM, TokenKind.KW_RESTORE, 
             TokenKind.KW_RETURN, TokenKind.KW_STOP, TokenKind.KW_FOR]:
-            self.parse_block()
+            block = self.parse_block()
 
         self.parse_next_line()
 
-        return
+        return block
 
-    def parse_control_variable(self) -> "ControlVariable":
-        self.parse_simple_numeric_variable()
-        return
+    def parse_control_variable(self) -> ast.SimpleNumVar:
+        return self.parse_simple_numeric_variable()
+        
+    def parse_initial_value(self) -> ast.NumExpr:
+        return self.parse_numeric_expression()
+        
+    def parse_limit(self) -> ast.NumExpr:
+        return self.parse_numeric_expression()
+        
+    def parse_increment(self) -> ast.NumExpr:
+        return self.parse_numeric_expression()
 
-    def parse_initial_value(self) -> "InitialValue":
-        self.parse_numeric_expression()
-        return
-
-    def parse_limit(self) -> "Limit":
-        self.parse_numeric_expression()
-        return
-
-    def parse_increment(self) -> "Increment":
-        self.parse_numeric_expression()
-        return
-
-    def parse_next_line(self) -> "NextLine":
+    def parse_next_line(self) -> None:
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value
 
         self.parse_next_statement()
-
         assert self.lexer.next() == TokenKind.EOL
+        return
 
-    def parse_simple_numeric_variable(self) -> "SimpleNumericVariable":
+    def parse_simple_numeric_variable(self) -> ast.SimpleNumVar:
         assert self.lexer.peek().kind == TokenKind.IDENTIFIER
         tok = self.lexer.next()
         identifier = self.lexer.get_token_string(tok)
@@ -190,46 +192,47 @@ class Parser:
         else:
             raise AssertionError("Invalid simple numeric variable, get good")
         
-        return
+        return ast.SimpleNumVar(identifier)
 
-    def parse_next_statement(self) -> "NextStatement":
+    def parse_next_statement(self) -> None:
         assert self.lexer.next().kind == TokenKind.KW_NEXT
 
         self.parse_control_variable()
-
         return
     
-    def parse_data_statement(self) -> "DataStatement":
+    def parse_data_statement(self) -> ast.Data:
         assert self.lexer.next().kind == TokenKind.KW_DATA
 
-        self.parse_data_list()
-        return
+        data = self.parse_data_list()
+        return ast.Data(data)
 
-    def parse_data_list(self) -> "DataList":
-        self.parse_datum()
+    def parse_data_list(self) -> List[ast.Datum]:
+        data = []
+        data.append(self.parse_datum())
 
         while True:
             if self.lexer.peek().kind == TokenKind.SYM_COMMA:
                 self.lexer.next()
-                self.parse_datum()
+                data.append(self.parse_datum())
             else: break
 
-        return
+        return data
 
-    def parse_def_statement(self) -> "DefStatement":
+    def parse_def_statement(self) -> ast.Def:
         assert self.lexer.next().kind == TokenKind.KW_DEF
 
-        self.parse_numeric_defined_function()
+        name = "FN" + self.parse_numeric_defined_function()
 
+        param = None
         if self.lexer.peek().kind == TokenKind.SYM_L_PAREN:
-            self.parse_parameter_list()
+            param = self.parse_parameter_list()
 
         assert self.lexer.next().kind == TokenKind.SYM_EQUAL
 
-        self.parse_numeric_expression()
-        return
+        body = self.parse_numeric_expression()
+        return ast.Def(name, param, body)
 
-    def parse_numeric_defined_function(self) -> "NumericDefinedFunction":
+    def parse_numeric_defined_function(self) -> str:
         assert self.lexer.next().kind == TokenKind.KW_FN
 
         assert self.lexer.next().kind == TokenKind.IDENTIFIER
@@ -238,107 +241,118 @@ class Parser:
         assert identifier[0] in LETTERS
         assert len(identifier) == 1
 
-        return
+        return identifier
 
-    def parse_parameter_list(self) -> "ParameterList":
+    def parse_parameter_list(self) -> ast.SimpleNumVar:
         assert self.lexer.next().kind == TokenKind.SYM_L_PAREN
 
-        self.parse_parameter()
+        val = self.parse_parameter()
 
         assert self.lexer.next().kind == TokenKind.SYM_R_PAREN
+        return val
 
-    def parse_parameter(self) -> "Parameter":
-        self.parse_simple_numeric_variable()
-        return
+    def parse_parameter(self) -> ast.SimpleNumVar:
+        return self.parse_simple_numeric_variable()
 
-    def parse_dimension_statement(self) -> "DimensionStatement":
+    def parse_dimension_statement(self) -> ast.Dim:
+        decls = []
         assert self.lexer.next().kind == TokenKind.KW_DIM
 
-        self.parse_array_declaration()
+        decls.append(self.parse_array_declaration())
 
         while True:
             if self.lexer.peek().kind == TokenKind.SYM_COMMA:
                 self.lexer.next()
-                self.parse_array_declaration()
+                decls.append(self.parse_array_declaration())
+            else:
+                break
+        return ast.Dim(decls)
 
-    def parse_array_declaration(self) -> "ArrayDeclaration":
-        self.parse_numeric_array_name()
+    def parse_array_declaration(self) -> ast.ArrayDecl:
+        name = self.parse_numeric_array_name()
 
         assert self.lexer.next().kind == TokenKind.SYM_L_PAREN
 
-        self.parse_bounds()
+        bounds = self.parse_bounds()
 
         assert self.lexer.next().kind == TokenKind.SYM_R_PAREN
+        return ast.ArrayDecl(name, bounds)
 
-    def parse_numeric_array_name(self) -> "NumericArrayName":
+    def parse_numeric_array_name(self) -> str:
         assert self.lexer.next().kind == TokenKind.IDENTIFIER
         tok = self.lexer.next()
         identifier = self.lexer.get_token_string(tok)
         assert identifier[0] in LETTERS
         assert len(identifier) == 1
 
-        return
+        return identifier
     
-    def parse_bounds(self) -> "Bounds":
-        assert (bound1 := self.lexer.next().kind) == TokenKind.INTEGER
+    def parse_bounds(self) -> Tuple[int, Optional[int]]:
+        assert (bound1 := self.lexer.next()).kind == TokenKind.INTEGER
 
+        int1 = int(self.lexer.get_token_string(bound1))
+
+        int2 = None
         if self.lexer.peek().kind == TokenKind.SYM_COMMA:
             self.lexer.next()
-            assert (bound2 := self.lexer.next().kind) == TokenKind.INTEGER
+            assert (bound2 := self.lexer.next()).kind == TokenKind.INTEGER
+            int2 = int(self.lexer.get_token_string(bound2))
 
-        return
+        return int1, int2
         
-    def parse_gosub_statement(self) -> "GoSubStatement":
+    def parse_gosub_statement(self) -> ast.GoSub:
         assert self.lexer.next().kind == TokenKind.KW_GO
         assert self.lexer.next().kind == TokenKind.KW_SUB
 
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value
 
-        return
+        return ast.GoSub(line_number)
 
-    def parse_goto_statement(self) -> "GoToStatement":
+    def parse_goto_statement(self) -> ast.Goto:
         assert self.lexer.next().kind == TokenKind.KW_GO
         assert self.lexer.next().kind == TokenKind.KW_TO
 
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value
 
-        return
+        return ast.Goto(line_number)
 
-    def parse_on_goto_statement(self) -> "OnGoToStatement":
+    def parse_on_goto_statement(self) -> ast.OnGoto:
+        labels = []
+
         assert self.lexer.next().kind == TokenKind.KW_ON
 
-        self.parse_numeric_expression()
+        on_expr = self.parse_numeric_expression()
 
         assert self.lexer.next().kind == TokenKind.KW_GO
         assert self.lexer.next().kind == TokenKind.KW_TO
 
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
-        line_number = self.lexer.next().value
+        labels.append(self.lexer.next().value)
 
         while True:
             if self.lexer.peek().kind == TokenKind.SYM_COMMA:
                 self.lexer.next()
                 
                 assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
-                line_number = self.lexer.next().value
+                labels.append(self.lexer.next().value)
             else:
                 break
         
-        return
+        return ast.OnGoto(on_expr, labels)
 
-    def parse_if_then_statement(self) -> "IfThenStatement":
+    def parse_if_then_statement(self) -> ast.IfThen:
         assert self.lexer.next().kind == TokenKind.KW_IF
 
-        self.parse_relational_expression()
+        expr = self.parse_relational_expression()
 
         assert self.lexer.next().kind == TokenKind.KW_THEN
 
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value        
 
-        return
+        return ast.IfThen(expr, line_number)
 
     def parse_relation(self) -> "Relation":
         tok = self.lexer.next()

@@ -21,7 +21,8 @@ class ForBlock:
     control_var: "SimpleNumVar"
     init_val: "NumExpr"
     limit: "NumExpr"
-    step_by: Optional[int]
+    step_by: Optional["NumExpr"]
+    body: "Block"
 
 
 Block = Line | ForBlock
@@ -149,13 +150,19 @@ class IfThen:
     # Line number
     goto: int
 
-
 @dataclass
-class RelationalExpr:
+class RelationalNumExpr:
     relation: "Relation"
     lhs: NumExpr
     rhs: NumExpr
 
+@dataclass
+class RelationalStrExpr:
+    relation: "Relation"
+    lhs: "StringExpr"
+    rhs: "StringExpr"
+
+RelationalExpr = RelationalNumExpr | RelationalStrExpr
 
 class Relation(Enum):
     REL_EQUALS = 0

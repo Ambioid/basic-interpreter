@@ -1,3 +1,5 @@
+from lexer import Lexer
+from tokens import TokenKind
 import argparse
 
 parser = argparse.ArgumentParser(
@@ -13,4 +15,13 @@ if __name__ == "__main__":
     # print(args.filename, args.verbose)
 
     with open(args.filename) as file:
-        print(file.read())
+        source = file.read()
+
+        print(source)
+
+        lexer = Lexer(source)
+
+        while True:
+            print((tok := lexer.process_token()))
+            if tok.kind == TokenKind.EOF:
+                break

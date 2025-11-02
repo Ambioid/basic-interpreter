@@ -12,24 +12,36 @@ STRING_CHARS = set('"').union(QUOTED_STRING_CHARACTERS)
 
 class Lexer:
     source: str
-    cache: List[Optional[Token]] = [None, None, None]
+    cache: List[Optional[Token]] = [None, None, None, None]
     current: int = 0
     start: int = 0
 
     def __init__(self, source):
         # Source is a string to be decomposed into tokens
         self.source = source
-        pass
+
+        # while self.cache[0] is None:
+            # self.next()
+        return
 
     def skip_whitespace(self):
+        if self.current >= len(self.source)-1:
+            self.start = self.current
+            return
         while self.source[self.current] in WHITESPACE:
+            if self.current >= len(self.source)-1:
+                break
             self.current += 1
         
         self.start = self.current
 
     def process_variable(self) -> Token:
-        while self.source[self.current] in UNQUOTED_STRING_CHARACTER:
-            self.current+=1
+        assert self.source[self.start] in LETTERS
+        self.current += 1
+
+        if self.source[self.start] in DIGITS:
+            self.current += 1
+        
         return Token(TokenKind.IDENTIFIER, self.start, self.current)
 
     def process_alpha(self) -> Token:
@@ -130,8 +142,8 @@ class Lexer:
             case "r":
                 if (tok := check_kw("RANDOMIZE", TokenKind.KW_RANDOMIZE)) is not None:
                     return Token(tok, self.start, self.current)
-                elif (tok := check_kw("REM", TokenKind.KW_REM)) is not None:
-                    return Token(tok, self.start, self.current)
+                # elif (tok := check_kw("REM", TokenKind.KW_REM)) is not None:
+                #     return Token(tok, self.start, self.current)
                 elif (tok := check_kw("RESTORE", TokenKind.KW_RESTORE)) is not None:
                     return Token(tok, self.start, self.current)
                 elif (tok := check_kw("READ", TokenKind.KW_READ)) is not None:
@@ -237,9 +249,9 @@ class Lexer:
         kind = TokenKind.UNKNOWN
         while True:
             char: str = self.source[self.current]
-            self.current += 1
 
             if char.isdigit():
+                self.current += 1
                 if kind == TokenKind.UNKNOWN: 
                     kind = TokenKind.INTEGER
             elif char == '.':
@@ -251,36 +263,40 @@ class Lexer:
         
 
     
-    def process_token(self) -> Optional[Token]:
+    def process_token(self) -> Token:
         self.skip_whitespace()
+
+        if self.source[self.current:self.current+3] == "REM":
+            while self.source[self.current] != '\n':
+                self.current += 1
+
         self.start = self.current
+        if self.current >= len(self.source):
+            return Token(TokenKind.EOF, len(self.source), len(self.source))
+        
         char: str = self.source[self.current]
 
-        print(f"cur: {self.current}, <{self.source[self.current]}>")
+        # print(f"cur: {self.current}, <{self.source[self.current]}>")
     
         if char == '\n':
             self.current += 1
             return Token(TokenKind.EOL, self.start, self.start+1)
-        elif self.current == len(self.source):
-            return Token(TokenKind.EOF, len(self.source), len(self.source))
-        elif self.current > len(self.source):
-            return None
         elif char.isalpha():
             return self.process_alpha()
         
         elif char.isdigit():
             
-            pass
+            return self.process_digit()
         else:
             return Token(self.process_symbol(), self.start, self.start + 1)
 
-    def triple_peek(self) -> Optional[Token]:
+    def triple_peek(self) -> Token:
         return self.cache[3]
     
-    def double_peek(self) -> Optional[Token]:
+    def double_peek(self) -> Token:
         return self.cache[2]
 
-    def peek(self) -> Optional[Token]:
+    def peek(self) -> Token:
         return self.cache[1]
 
     def next(self) -> Token:
@@ -288,20 +304,21 @@ class Lexer:
         self.cache[1] = self.cache[2]
         self.cache[2] = self.cache[3]
         self.cache[3] = self.process_token()
-        assert self.cache[0] is not None
+        #assert self.cache[0] is not None
+        # print("cache", self.cache)
         return self.cache[0]
     
     def get_token_string(self, tok:Token):
         return self.source[tok.start:tok.end]
     
         
-print("DATA DIM LET +-=;")
-l = Lexer("DATA DIM LET +-=;")
-print(l.process_token())
-print(l.process_token())
-print(l.process_token())
-print(l.process_token())
-print(l.process_token())
-print(l.process_token())
-print(l.process_token())
-print(l.process_token())
+# print("DATA DIM LET +-=;")
+# l = Lexer("DATA DIM LET +-=;")
+# print(l.process_token())
+# print(l.process_token())
+# print(l.process_token())
+# print(l.process_token())
+# print(l.process_token())
+# print(l.process_token())
+# print(l.process_token())
+# print(l.process_token())
