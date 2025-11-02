@@ -176,6 +176,8 @@ class Lexer:
                 return TokenKind.SYM_EQUAL
             case "/":
                 return TokenKind.SYM_SLASH
+            case "^":
+                return TokenKind.SYM_CARET
             case ";":
                 return TokenKind.SYM_SEMICOLON
             case "(":
