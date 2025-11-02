@@ -5,14 +5,13 @@ sign = lambda x: -1 if x < 0 else 1
 WHITESPACE = [' ']
 LETTERS = set('QWERTYUIOPASDFGHJKLZXCVBNM')
 DIGITS = set('0123456789')
-PLAIN_STRING_CHARACTER = set('+-.') + DIGITS + LETTERS
-UNQUOTED_STRING_CHARACTER = set(' ') + PLAIN_STRING_CHARACTER
-QUOTED_STRING_CHARACTERS = set('!#$%&\'()*,/:;<=>^_') + UNQUOTED_STRING_CHARACTER
-STRING_CHARS = set('"') + QUOTED_STRING_CHARACTERS
+PLAIN_STRING_CHARACTER = set('+-.').union(DIGITS).union(LETTERS)
+UNQUOTED_STRING_CHARACTER = set(' ').union(PLAIN_STRING_CHARACTER)
+QUOTED_STRING_CHARACTERS = set('!#$%&\'()*,/:;<=>^_').union(UNQUOTED_STRING_CHARACTER)
+STRING_CHARS = set('"').union(QUOTED_STRING_CHARACTERS)
 
 class Lexer:
-
-    source: Optional[str] = None
+    source: str
     cache: List[Optional[Token]] = [None, None, None]
     current: int = 0
     start: int = 0
@@ -289,6 +288,7 @@ class Lexer:
         self.cache[1] = self.cache[2]
         self.cache[2] = self.cache[3]
         self.cache[3] = self.process_token()
+        assert self.cache[0] is not None
         return self.cache[0]
     
     def get_token_string(self, tok:Token):
