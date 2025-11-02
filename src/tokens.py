@@ -3,7 +3,7 @@ from typing import Union, Optional
 
 class TokenKind(Enum):
     UNKNOWN = 0
-    IDENTIFIER = 1 
+    IDENTIFIER = 1  
     INTEGER = 37
     FLOAT = 38
     SYM_PLUS = 2
@@ -20,6 +20,11 @@ class TokenKind(Enum):
     SYM_DBL_QUOTE = 13
     SYM_PERIOD = 14
     SYM_COMMA = 15
+    SYM_NEQ = 45
+    SYM_LEQ = 46
+    SYM_GEQ = 47
+    KW_INPUT = 39
+    KW_PRINT = 40
     KW_LET = 16
     KW_DEF = 17
     KW_FN = 18
@@ -39,6 +44,10 @@ class TokenKind(Enum):
     KW_BASE = 32
     KW_REM = 33
     KW_RANDOMIZE = 34
+    KW_READ = 41
+    KW_RESTORE = 42
+    KW_END = 43
+    KW_STEP = 44
     EOF = 35
     EOL = 36
 
