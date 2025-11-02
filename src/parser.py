@@ -1,5 +1,7 @@
 from lexer import Lexer, LETTERS, DIGITS
 from tokens import Token, TokenKind
+from typing import Optional
+import syntax as ast
 
 class EndLineTrigger(Exception):
     pass
@@ -445,6 +447,24 @@ class Parser:
         # Quoted string | Unquoted string
         pass
 
-    def parse_numeric_expression(self) -> "NumericExpression":
-        #todo
+    def parse_numeric_expression(self) -> ast.NumExpr:
         pass
+
+    def parse_term(self) -> ast.NumExpr:
+        pass
+
+    def parse_factor(self) -> ast.NumExpr:
+        pass
+    
+    def parse_primary(self) -> ast.NumExpr:
+        match self.lexer.peek().kind:
+            case TokenKind.IDENTIFIER:
+                pass
+            case TokenKind.INTEGER:
+                pass
+            case TokenKind.FLOAT:
+                pass
+            case TokenKind.SYM_L_PAREN:
+                expr = self.parse_numeric_expression()
+                assert self.lexer.next().kind == TokenKind.SYM_R_PAREN
+                return expr
