@@ -237,4 +237,4 @@ class Return: pass
 class Stop: pass
 
 
-Stmt = Data | Def | Dim | GoSub | Goto | IfThen | Input | NumLet | StringLet | OnGoto | Option | Print | Randomize | Read | Restore | Return | Stop
+Stmt = Data | Def | Dim | GoSub | Goto | IfThen | Input | NumLet | StringLet | OnGoto | Option | Print | Randomize | Read | Restore | Return | Stop # type: ignore
