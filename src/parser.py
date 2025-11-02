@@ -306,7 +306,7 @@ class Parser:
 
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value
-
+        assert line_number is int 
         return ast.GoSub(line_number)
 
     def parse_goto_statement(self) -> ast.Goto:
@@ -316,6 +316,7 @@ class Parser:
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value
 
+        assert line_number is int 
         return ast.Goto(line_number)
 
     def parse_on_goto_statement(self) -> ast.OnGoto:
@@ -352,9 +353,10 @@ class Parser:
         assert self.lexer.peek().kind == TokenKind.INTEGER # Line number
         line_number = self.lexer.next().value        
 
+        assert line_number is int 
         return ast.IfThen(expr, line_number)
 
-    def parse_relation(self) -> "Relation":
+    def parse_relation(self) -> ast.Relation:
         tok = self.lexer.next()
         assert tok.kind in [TokenKind.SYM_EQUAL, TokenKind.SYM_NEQ, 
                             TokenKind.SYM_L_ANGLE, TokenKind.SYM_R_ANGLE,
@@ -458,27 +460,80 @@ class Parser:
 
     
     def parse_datum(self) -> "Datum":
-        # Quoted string | Unquoted string
-        pass
+        match self.lexer.peek().kind:
+            case TokenKind.
 
     def parse_numeric_expression(self) -> ast.NumExpr:
-        pass
+        pom = [TokenKind.SYM_PLUS, TokenKind.SYM_MINUS]
+        sign = None
+        if (peeked := self.lexer.peek().kind) in pom:
+            self.lexer.next()
+            sign = ast.UnaryOpKind.UOP_NEG if peeked == TokenKind.SYM_PLUS else ast.UnaryOpKind.UOP_POS
+ 
+        lhs = self.parse_term()
+        if sign is not None:
+            lhs = ast.UnaryOp(op=sign, operand=lhs)
+        
+        while (peeked := self.lexer.peek().kind) in pom:
+            op = ast.BinOpKind.BOP_PLUS if peeked == TokenKind.SYM_PLUS else ast.BinOpKind.BOP_MINUS
+            self.lexer.next()
+            lhs = ast.BinOp(op=op, lhs=lhs, rhs=self.parse_term())
+
+        return lhs
+
 
     def parse_term(self) -> ast.NumExpr:
-        pass
+        lhs = self.parse_factor()
+        while self.lexer.peek().kind in [TokenKind.SYM_ASTERISK, TokenKind.SYM_SLASH]:
+            op = None
+            match self.lexer.peek():
+                case TokenKind.SYM_ASTERISK:
+                    op = ast.BinOpKind.BOP_MULTIPLY
+                case TokenKind.SYM_SLASH:
+                    op = ast.BinOpKind.BOP_DIVIDE
+            assert op is not None 
+            lhs = ast.BinOp(op=op, lhs=lhs, rhs=self.parse_factor())
+        
+        return lhs
+
 
     def parse_factor(self) -> ast.NumExpr:
-        pass
+        lhs = self.parse_primary()
+        while self.lexer.peek().kind == TokenKind.SYM_CARET:
+            lhs = ast.BinOp(op=ast.BinOpKind.BOP_CARET, lhs=lhs, rhs=self.parse_numeric_expression())
+        
+        return lhs
+
     
     def parse_primary(self) -> ast.NumExpr:
         match self.lexer.peek().kind:
+            case TokenKind.KW_FN:
+                assert self.lexer.peek().kind == TokenKind.IDENTIFIER
+                ident = self.lexer.get_token_string(self.lexer.next())
+                fixed_ident = "FN"+ident if not ident.startswith("FN") else ident
+                arg = None
+                if self.lexer.peek().kind == TokenKind.SYM_L_PAREN:
+                    arg = self.parse_numeric_expression()
+                    assert self.lexer.next().kind == TokenKind.SYM_R_PAREN
+                return ast.NumFunctionCall(fun_name=ast.NumFunDefined(name=fixed_ident), arg = arg)
             case TokenKind.IDENTIFIER:
-                pass
+                name = self.lexer.get_token_string(self.lexer.next())
+                if self.lexer.peek().kind == TokenKind.SYM_L_PAREN:
+                    indices = [self.parse_numeric_expression()]
+                    while self.lexer.peek().kind != TokenKind.SYM_R_PAREN:
+                        assert self.lexer.next().kind == TokenKind.SYM_COMMA
+                        indices.append(self.parse_numeric_expression())
+                    assert self.lexer.next().kind == TokenKind.SYM_R_PAREN
+                    return ast.NumArrayElem(array_name=name, indices=indices)
+                else:
+                    return ast.SimpleNumVar(name=name)
             case TokenKind.INTEGER:
-                pass
+                return ast.NumRep(num=int(self.lexer.get_token_string(self.lexer.next())))
             case TokenKind.FLOAT:
-                pass
+                return ast.NumRep(num=float(self.lexer.get_token_string(self.lexer.next())))
             case TokenKind.SYM_L_PAREN:
                 expr = self.parse_numeric_expression()
                 assert self.lexer.next().kind == TokenKind.SYM_R_PAREN
                 return expr
+            case _:
+                raise AssertionError("expected 'FN', integer, float or left parenthesis, got " + str(self.lexer.peek().kind))

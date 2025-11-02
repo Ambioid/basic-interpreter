@@ -11,6 +11,7 @@ class TokenKind(Enum):
     SYM_ASTERISK = 4
     SYM_EQUAL = 5
     SYM_SLASH = 6
+    SYM_CARET = 48
     SYM_SEMICOLON = 7
     SYM_L_PAREN = 8
     SYM_R_PAREN = 9
@@ -56,7 +57,7 @@ class Token:
     start: int
     end: int
 
-    value: Optional[Union[int, float]] = None
+    value: Optional[Union[int, float]]
 
     def __init__(self, kind, start, end):
         self.kind = kind
@@ -64,5 +65,4 @@ class Token:
         self.end = end
 
     def __repr__(self):
-        fmt = f"{self.kind.name} <{self.start}:{self.end}>"
-        return fmt
+        return f"{self.kind.name} <{self.start}:{self.end}>"

@@ -70,7 +70,7 @@ NumVar = SimpleNumVar | NumArrayElem
 
 @dataclass
 class NumRep:
-    num: int
+    num: int | float
 
 
 @dataclass
