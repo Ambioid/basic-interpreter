@@ -1,5 +1,5 @@
 from tokens import Token, TokenKind
-from typing import Union, Optional
+from typing import Union, Optional, List
 sign = lambda x: -1 if x < 0 else 1
 
 WHITESPACE = [' ']
@@ -13,7 +13,7 @@ STRING_CHARS = set('"') + QUOTED_STRING_CHARACTERS
 class Lexer:
 
     source: Optional[str] = None
-    peeked: Optional[Token] = None
+    cache: List[Optional[Token]] = [None, None, None]
     current: int = 0
     start: int = 0
 
@@ -27,6 +27,11 @@ class Lexer:
             self.current += 1
         
         self.start = self.current
+
+    def process_variable(self) -> Token:
+        while self.source[self.current] in UNQUOTED_STRING_CHARACTER:
+            self.current+=1
+        return Token(TokenKind.IDENTIFIER, self.start, self.current)
 
     def process_alpha(self) -> Token:
         char: str = self.source[self.current]
@@ -43,9 +48,7 @@ class Lexer:
                 if (tok := check_kw("LET", TokenKind.KW_LET)) is not None:
                     return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current+=1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
                 
             case "d":
                 if (tok := check_kw("DEF", TokenKind.KW_DEF)) is not None:
@@ -55,9 +58,7 @@ class Lexer:
                 elif (tok := check_kw("DIM", TokenKind.KW_DIM)) is not None:
                     return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current += 1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
                 
             case "f":
                 if (tok := check_kw("FN", TokenKind.KW_FN)) is not None:
@@ -65,17 +66,25 @@ class Lexer:
                 elif (tok := check_kw("FOR", TokenKind.KW_FOR)) is not None:
                     return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current += 1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
                 
             case "g":
                 if (tok := check_kw("GO", TokenKind.KW_GO)) is not None:
                     return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current += 1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
+                
+            case "e":
+                if (tok := check_kw("END", TokenKind.KW_END)) is not None:
+                    return Token(tok, self.start, self.current)
+                else:
+                    return self.process_variable()
+                
+            case "p":
+                if (tok := check_kw("PRINT", TokenKind.KW_PRINT)) is not None:
+                    return Token(tok, self.start, self.current)
+                else:
+                    return self.process_variable()
                 
             case "t":
                 if (tok := check_kw("TO", TokenKind.KW_TO)) is not None:
@@ -83,63 +92,57 @@ class Lexer:
                 elif (tok := check_kw("THEN", TokenKind.KW_THEN)) is not None:
                     return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current += 1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
                 
             case "s":
                 if (tok := check_kw("SUB", TokenKind.KW_SUB)) is not None:
                     return Token(tok, self.start, self.current)
+                elif (tok := check_kw("STEP", TokenKind.KW_STEP)) is not None:
+                    return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current += 1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
                 
             case "i":
                 if (tok := check_kw("IF", TokenKind.KW_IF)) is not None:
                     return Token(tok, self.start, self.current)
+                if (tok := check_kw("INPUT", TokenKind.KW_INPUT)) is not None:
+                    return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current += 1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
                 
             case "n":
                 if (tok := check_kw("NEXT", TokenKind.KW_NEXT)) is not None:
                     return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current += 1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
                 
             case "o":
                 if (tok := check_kw("OPTION", TokenKind.KW_OPTION)) is not None:
                     return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current += 1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
             
             case "b":
                 if (tok := check_kw("BASE", TokenKind.KW_BASE)) is not None:
                     return Token(tok, self.start, self.current)
                 else:
-                    while self.source[self.current] not in WHITESPACE:
-                        self.current += 1
-                    return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                    return self.process_variable()
                 
             case "r":
                 if (tok := check_kw("RANDOMIZE", TokenKind.KW_RANDOMIZE)) is not None:
                     return Token(tok, self.start, self.current)
                 elif (tok := check_kw("REM", TokenKind.KW_REM)) is not None:
                     return Token(tok, self.start, self.current)
+                elif (tok := check_kw("RESTORE", TokenKind.KW_RESTORE)) is not None:
+                    return Token(tok, self.start, self.current)
+                elif (tok := check_kw("READ", TokenKind.KW_READ)) is not None:
+                    return Token(tok, self.start, self.current)
                 else:
                     while self.source[self.current] not in WHITESPACE:
                         self.current += 1
                     return Token(TokenKind.IDENTIFIER, self.start, self.current)
             case _:
-                while self.source[self.current] not in WHITESPACE:
-                    self.current += 1
-                return Token(TokenKind.IDENTIFIER, self.start, self.current)
+                return self.process_variable()
                 
     def process_symbol(self) -> TokenKind:
         char: str = self.source[self.current]
@@ -163,9 +166,20 @@ class Lexer:
             case ")":
                 return TokenKind.SYM_R_PAREN
             case "<":
-                return TokenKind.SYM_L_ANGLE
+                if self.source[self.current + 1] == '>':
+                    self.current += 1
+                    return TokenKind.SYM_NEQ
+                elif self.source[self.current + 1] == '=':
+                    self.current += 1
+                    return TokenKind.SYM_LEQ
+                else:
+                    return TokenKind.SYM_L_ANGLE
             case ">":
-                return TokenKind.SYM_R_ANGLE
+                if self.source[self.current + 1] == '=':
+                    self.current += 1
+                    return TokenKind.SYM_GEQ
+                else:
+                    return TokenKind.SYM_R_ANGLE
             case "$":
                 return TokenKind.SYM_DOLLAR
             case "\"":
@@ -261,20 +275,24 @@ class Lexer:
         else:
             return Token(self.process_symbol(), self.start, self.start + 1)
 
+    def triple_peek(self) -> Optional[Token]:
+        return self.cache[3]
+    
+    def double_peek(self) -> Optional[Token]:
+        return self.cache[2]
+
     def peek(self) -> Optional[Token]:
-        if self.peeked is None: 
-            self.peeked = self.process_token()
-            return self.peeked
-        
-        return self.peeked
+        return self.cache[1]
 
     def next(self) -> Token:
-        if self.peeked is None:
-            return self.process_token()
-        
-        peek = self.peeked
-        self.peeked = self.process_token()
-        return peek
+        self.cache[0] = self.cache[1]
+        self.cache[1] = self.cache[2]
+        self.cache[2] = self.cache[3]
+        self.cache[3] = self.process_token()
+        return self.cache[0]
+    
+    def get_token_string(self, tok:Token):
+        return self.source[tok.start:tok.end]
     
         
 print("DATA DIM LET +-=;")
